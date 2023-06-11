@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/AssetLists/Editor/AssetListsEditorWindow/AssetListsEditorWindow.uss?fileID=7433441132597879392&amp;guid=ff94771a955e2dd46817167099aa2bf0&amp;type=3#AssetListsEditorWindow" />
+    <TwoPanelSplitView fixed-pane-initial-dimension="399">
+        <ui:VisualElement>
+            <uie:Toolbar>
+                <uie:ToolbarSpacer style="flex-grow: 1;" />
+                <uie:ToolbarButton text="Refresh Asset List" display-tooltip-when-elided="true" name="AssetRefreshButton" />
+            </uie:Toolbar>
+            <ui:ScrollView>
+                <ui:Foldout text="Assets" name="AssetFoldout" />
+            </ui:ScrollView>
+        </ui:VisualElement>
+        <ui:VisualElement>
+            <ui:VisualElement style="flex-direction: row;">
+                <ui:Foldout text="Default Assets" name="DefaultAssetsFoldout" />
+                <ui:VisualElement style="flex-direction: row; flex-grow: 1; height: 20px;">
+                    <ui:VisualElement style="flex-grow: 1;" />
+                    <ui:Button text="Download and Import" display-tooltip-when-elided="true" name="DownloadAndImportDefaultAssets" style="width: 150px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </TwoPanelSplitView>
+    <uie:Toolbar />
+</ui:UXML>
