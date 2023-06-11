@@ -11,7 +11,7 @@ namespace AssetRetriever {
         PersistentListsData listsData;
 
 
-        [MenuItem("Window/Asset Retriever")]
+        [MenuItem("Window/Asset Retriever", priority = 1500)]
         public static void ShowExample() {
             AssetRetrieverEditorWindow wnd = GetWindow<AssetRetrieverEditorWindow>();
             wnd.titleContent = new GUIContent("Asset Retriever");
