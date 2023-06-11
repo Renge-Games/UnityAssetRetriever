@@ -6,15 +6,15 @@ using System.Collections.Generic;
 
 namespace AssetRetriever {
 
-    public class AssetListsEditorWindow : EditorWindow {
+    public class AssetRetrieverEditorWindow : EditorWindow {
         PersistentAssetData assetData;
         PersistentListsData listsData;
 
 
-        [MenuItem("Window/Asset Lists")]
+        [MenuItem("Window/Asset Retriever")]
         public static void ShowExample() {
-            AssetListsEditorWindow wnd = GetWindow<AssetListsEditorWindow>();
-            wnd.titleContent = new GUIContent("Asset Lists");
+            AssetRetrieverEditorWindow wnd = GetWindow<AssetRetrieverEditorWindow>();
+            wnd.titleContent = new GUIContent("Asset Retriever");
         }
 
         public void CreateGUI() {
@@ -22,10 +22,10 @@ namespace AssetRetriever {
             VisualElement root = rootVisualElement;
 
             // Import UXML
-            var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/AssetLists/Editor/AssetListsEditorWindow/AssetListsEditorWindow.uxml");
+            var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.renge.asset-retriever/Editor/AssetRetrieverEditorWindow/AssetRetrieverEditorWindow.uxml");
             visualTree.CloneTree(root);
 
-            var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/AssetLists/Editor/AssetListsEditorWindow/AssetListsEditorWindow.uss");
+            var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.renge.asset-retriever/Editor/AssetRetrieverEditorWindow/AssetRetrieverEditorWindow.uss");
             root.styleSheets.Add(styleSheet);
 
             assetData = new PersistentAssetData();
