@@ -1,6 +1,6 @@
 # AssetStoreRetriever
 
-![Discord Shield](https://discordapp.com/api/guilds/719164975658172446/widget.png?style=shield)
+[![](https://dcbadge.vercel.app/api/server/SBKb9eFtfF)](https://discord.gg/SBKb9eFtfF)
 
 Download and Import your favorite Unity Asset Store assets all at once with this tool.
 
