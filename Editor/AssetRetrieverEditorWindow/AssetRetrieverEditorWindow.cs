@@ -52,6 +52,9 @@ namespace AssetRetriever {
                         var asset = item.result.download;
                         string packagePath = $"{AssetUtil.GetAssetCachePath()}/{asset.filename_safe_publisher_name}/{asset.filename_safe_category_name}/{asset.filename_safe_package_name}.unitypackage";
                         AssetDatabase.ImportPackage(packagePath, false);
+                        AssetDatabase.importPackageCompleted += (packageName) => {
+                            Debug.Log($"Asset {item.result.download.filename_safe_package_name} imported.");
+                        };
                     }
                 });
             }
