@@ -1,4 +1,4 @@
-# AssetStoreRetriever
+# Unity Asset Retriever
 
 [![](https://dcbadge.vercel.app/api/server/SBKb9eFtfF)](https://discord.gg/SBKb9eFtfF)
 
