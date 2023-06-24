@@ -8,7 +8,9 @@ Download and Import your favorite Unity Asset Store assets all at once with this
 
 ## Installation
 
-This is a package for Unity, so to install it, go to the package manager window and click on " + > Add package from git URL". Then paste the link of this git repo to add the package to your project.
+This is a package for Unity, so to install it, go to the package manager window and click on " + > Add package from git URL". Then paste the following link into the textbox that appears to add the package to your project.
+
+https://github.com/Renge-Games/UnityAssetRetriever.git
 
 ## Usage
 
