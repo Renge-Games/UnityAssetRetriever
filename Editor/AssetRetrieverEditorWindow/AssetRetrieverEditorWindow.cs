@@ -20,7 +20,27 @@ namespace AssetRetriever {
             wnd.titleContent = new GUIContent("Asset Retriever");
         }
 
+        void OnEnable() {
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+            AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
+        }
+
+        void OnDisable() {
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+            AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
+        }
+
+        public void OnBeforeAssemblyReload() {
+            Debug.Log("Before Assembly Reload");
+        }
+
+        public void OnAfterAssemblyReload() {
+            Debug.Log("After Assembly Reload");
+            //TODO: create asset import class to keep track of which assets were imported and which still need to be imported
+        }
+
         public void CreateGUI() {
+
             // Each editor window contains a root VisualElement object
             VisualElement root = rootVisualElement;
 
@@ -82,7 +102,7 @@ namespace AssetRetriever {
             return packagePaths;
         }
 
-        private async Task ImportAsset(string packagePath, bool interactive = false) {
+        private async Task ImportAsset(string packagePath, bool interactive = true) {
             Debug.Log($"Importing Package at {packagePath}");
             AssetDatabase.ImportPackage(packagePath, interactive);
             bool isDone = false;
