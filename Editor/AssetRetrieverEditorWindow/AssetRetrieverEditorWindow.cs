@@ -12,7 +12,7 @@ namespace AssetRetriever {
 
 
         [MenuItem("Window/Asset Retriever", priority = 1500)]
-        public static void ShowExample() {
+        public static void ShowWindow() {
             AssetRetrieverEditorWindow wnd = GetWindow<AssetRetrieverEditorWindow>();
             wnd.titleContent = new GUIContent("Asset Retriever");
         }
@@ -36,7 +36,29 @@ namespace AssetRetriever {
             AssetUtil.GetAssetCachePath();
 
             root.Q<Button>("AssetRefreshButton").RegisterCallback<ClickEvent>(ReGenerateAssetLabels);
+            root.Q<Button>("DownloadDefaultAssets").RegisterCallback<ClickEvent>(DownloadAssets);
             root.Q<Button>("DownloadAndImportDefaultAssets").RegisterCallback<ClickEvent>(DownloadAndImportAssets);
+        }
+
+        private async void DownloadAssets(ClickEvent evt) {
+            Debug.Log("Getting Asset Info");
+            List<AssetDownload> data = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
+            Debug.Log("Finished Getting Asset Info, Downloading Assets...");
+            int downloadCounter = 0;
+            foreach (AssetDownload item in data) {
+                Debug.Log($"Downloading {item.result.download.filename_safe_package_name}");
+                AssetUtil.DownloadAsset(item.result.download, (package_id, message, bytes, total) => {
+                    downloadCounter++;
+                    if (message == "ok") {
+                        Debug.Log($"Asset {item.result.download.filename_safe_package_name} downloaded. ({downloadCounter}/{data.Count})");
+                    } else {
+                        Debug.Log(message);
+                    }
+                    if (downloadCounter >= data.Count) {
+                        Debug.Log("------------ Downloading Assets Complete ------------");
+                    }
+                });
+            }
         }
 
         private async void DownloadAndImportAssets(ClickEvent evt) {
