@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using System.Linq;
 using System.Collections.Generic;
+using Codice.Client.Common.GameUI;
+using System.Threading.Tasks;
+//using UnityEditor.VersionControl;
 
 namespace AssetRetriever {
 
@@ -41,8 +44,23 @@ namespace AssetRetriever {
         }
 
         private async void DownloadAssets(ClickEvent evt) {
+            await DownloadAssets();
+        }
+
+        private async void DownloadAndImportAssets(ClickEvent evt) {
+
+            var packagePaths = await DownloadAssets();
+            while (packagePaths.Count > 0) {
+                var packagePath = packagePaths[0];
+                packagePaths.RemoveAt(0);
+                await ImportAsset(packagePath);
+            }
+        }
+
+        private async Task<List<string>> DownloadAssets() {
             Debug.Log("Getting Asset Info");
             List<AssetDownload> data = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
+            List<string> packagePaths = new List<string>();
             Debug.Log("Finished Getting Asset Info, Downloading Assets...");
             int downloadCounter = 0;
             foreach (AssetDownload item in data) {
@@ -51,35 +69,28 @@ namespace AssetRetriever {
                     downloadCounter++;
                     if (message == "ok") {
                         Debug.Log($"Asset {item.result.download.filename_safe_package_name} downloaded. ({downloadCounter}/{data.Count})");
+                        var asset = item.result.download;
+                        string packagePath = $"{AssetUtil.GetAssetCachePath()}/{asset.filename_safe_publisher_name}/{asset.filename_safe_category_name}/{asset.filename_safe_package_name}.unitypackage";
+                        packagePaths.Add(packagePath);
                     } else {
                         Debug.Log(message);
                     }
-                    if (downloadCounter >= data.Count) {
-                        Debug.Log("------------ Downloading Assets Complete ------------");
-                    }
                 });
             }
+            while (downloadCounter < data.Count) await Task.Yield();
+            Debug.Log("------------ Downloading Assets Complete ------------");
+            return packagePaths;
         }
 
-        private async void DownloadAndImportAssets(ClickEvent evt) {
-
-            Debug.Log("Getting Asset Info");
-            List<AssetDownload> data = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
-            Debug.Log("Finished Getting Asset Info, Downloading Assets...");
-            foreach (AssetDownload item in data) {
-                Debug.Log($"Downloading {item.result.download.filename_safe_package_name}");
-                AssetUtil.DownloadAsset(item.result.download, (package_id, message, bytes, total) => {
-                    if (message == "ok") {
-                        Debug.Log($"Asset {item.result.download.filename_safe_package_name} downloaded. Now Importing asset...");
-                        var asset = item.result.download;
-                        string packagePath = $"{AssetUtil.GetAssetCachePath()}/{asset.filename_safe_publisher_name}/{asset.filename_safe_category_name}/{asset.filename_safe_package_name}.unitypackage";
-                        AssetDatabase.ImportPackage(packagePath, false);
-                        AssetDatabase.importPackageCompleted += (packageName) => {
-                            Debug.Log($"Asset {item.result.download.filename_safe_package_name} imported.");
-                        };
-                    }
-                });
-            }
+        private async Task ImportAsset(string packagePath, bool interactive = false) {
+            Debug.Log($"Importing Package at {packagePath}");
+            AssetDatabase.ImportPackage(packagePath, interactive);
+            bool isDone = false;
+            AssetDatabase.importPackageCompleted += (packageName) => {
+                Debug.Log($"Asset {packageName} imported.");
+                isDone = true;
+            };
+            while (!isDone) await Task.Yield();
         }
 
         private async void GenerateAssetLabels() {
