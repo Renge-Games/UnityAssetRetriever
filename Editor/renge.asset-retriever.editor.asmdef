@@ -1,7 +1,9 @@
 {
     "name": "renge.asset-retriever.editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:23ac72935dddc294080605689c325e84"
+    ],
     "includePlatforms": [
         "Editor"
     ],

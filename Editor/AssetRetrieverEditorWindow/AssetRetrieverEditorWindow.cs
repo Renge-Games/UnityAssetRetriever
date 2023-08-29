@@ -23,6 +23,7 @@ namespace AssetRetriever {
         void OnEnable() {
             AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
             AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
+            AssetDownloaderAndImporter.GetGoingDawg();
         }
 
         void OnDisable() {
