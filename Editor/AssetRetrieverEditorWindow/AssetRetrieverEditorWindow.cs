@@ -23,7 +23,6 @@ namespace AssetRetriever {
         void OnEnable() {
             AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
             AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
-            AssetDownloaderAndImporter.GetGoingDawg();
         }
 
         void OnDisable() {
@@ -65,11 +64,13 @@ namespace AssetRetriever {
         }
 
         private async void DownloadAssets(ClickEvent evt) {
-            await DownloadAssets();
+            if (Application.isPlaying) throw new System.Exception("Please exit Play Mode before downloading Assets.");
+            var assetList = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
+            AssetDownloaderAndImporter.DownloadAssets(assetList);
         }
 
         private async void DownloadAndImportAssets(ClickEvent evt) {
-
+            if (Application.isPlaying) throw new System.Exception("Please exit Play Mode before downloading and importing Assets.");
             var packagePaths = await DownloadAssets();
             while (packagePaths.Count > 0) {
                 var packagePath = packagePaths[0];
