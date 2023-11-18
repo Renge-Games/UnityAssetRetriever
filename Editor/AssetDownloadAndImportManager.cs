@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 
 namespace AssetRetriever {
@@ -29,13 +31,39 @@ namespace AssetRetriever {
             gameObject.hideFlags = HideFlags.HideAndDontSave;
         }
 
+        float timer = 0;
+        float interval = 1f;
+
         private void Update() {
             if (instance == null) {
                 instance = this;
             } else if (instance != this) {
                 DestroyImmediate(gameObject);
             }
-            Debug.Log(GetInstanceID());
+            if(timer > 0) {
+                timer-=Time.deltaTime;
+            } else {
+                timer = interval;
+                Debug.Log(GetInstanceID());
+            }
+        }
+
+        void OnEnable() {
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+            AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
+        }
+
+        void OnDisable() {
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+            AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
+        }
+        public void OnBeforeAssemblyReload() {
+            Debug.Log("Before Assembly Reload");
+        }
+
+        public void OnAfterAssemblyReload() {
+            Debug.Log("After Assembly Reload");
+            //TODO: create asset import class to keep track of which assets were imported and which still need to be imported
         }
 
         public static void DownloadAssets(List<AssetDownload> assetList) {
@@ -44,8 +72,31 @@ namespace AssetRetriever {
 #pragma warning restore CS4014
         }
 
-        public static void DownloadAndImportAssets(List<AssetDownload> assetList) {
+        public async static void DownloadAndImportAssets(List<AssetDownload> assetList) {
+            EditorPrefs.SetBool(PersistentAssetData.GetKey("AssetDownloadDone"), false);
+            var packagePaths = await Instance.DownloadAssetsAsync(assetList);
+            EditorPrefs.SetBool(PersistentAssetData.GetKey("AssetDownloadDone"), true);
+            Instance.ImportNextAsset(packagePaths);
+        }
 
+        private async void ImportNextAsset(List<string> packagePaths) {
+            while (packagePaths.Count > 0) {
+                var packagePath = packagePaths[0];
+                packagePaths.RemoveAt(0);
+                await ImportAsset(packagePath);
+                Debug.Log("imported an asset! Yay");
+            }
+        }
+
+        private async Task ImportAsset(string packagePath, bool interactive = true) {
+            Debug.Log($"Importing Package at {packagePath}");
+            AssetDatabase.ImportPackage(packagePath, interactive);
+            bool isDone = false;
+            AssetDatabase.importPackageCompleted += (packageName) => {
+                Debug.Log($"Asset {packageName} imported.");
+                isDone = true;
+            };
+            while (!isDone) await Task.Yield();
         }
 
         private async Task<List<string>> DownloadAssetsAsync(List<AssetDownload> assetList) {

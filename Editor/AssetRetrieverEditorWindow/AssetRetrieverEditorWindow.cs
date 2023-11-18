@@ -1,11 +1,8 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using System.Linq;
 using System.Collections.Generic;
-using Codice.Client.Common.GameUI;
 using System.Threading.Tasks;
-//using UnityEditor.VersionControl;
 
 namespace AssetRetriever {
 
@@ -20,28 +17,7 @@ namespace AssetRetriever {
             wnd.titleContent = new GUIContent("Asset Retriever");
         }
 
-        void OnEnable() {
-            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
-            AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
-        }
-
-        void OnDisable() {
-            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
-            AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
-        }
-
-        public void OnBeforeAssemblyReload() {
-            Debug.Log("Before Assembly Reload");
-        }
-
-        public void OnAfterAssemblyReload() {
-            Debug.Log("After Assembly Reload");
-            //TODO: create asset import class to keep track of which assets were imported and which still need to be imported
-        }
-
         public void CreateGUI() {
-
-            // Each editor window contains a root VisualElement object
             VisualElement root = rootVisualElement;
 
             // Import UXML
@@ -71,12 +47,14 @@ namespace AssetRetriever {
 
         private async void DownloadAndImportAssets(ClickEvent evt) {
             if (Application.isPlaying) throw new System.Exception("Please exit Play Mode before downloading and importing Assets.");
-            var packagePaths = await DownloadAssets();
-            while (packagePaths.Count > 0) {
-                var packagePath = packagePaths[0];
-                packagePaths.RemoveAt(0);
-                await ImportAsset(packagePath);
-            }
+            var assetList = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
+            AssetDownloaderAndImporter.DownloadAndImportAssets(assetList);
+            //var packagePaths = await DownloadAssets();
+            //while (packagePaths.Count > 0) {
+            //    var packagePath = packagePaths[0];
+            //    packagePaths.RemoveAt(0);
+            //    await ImportAsset(packagePath);
+            //}
         }
 
         private async Task<List<string>> DownloadAssets() {

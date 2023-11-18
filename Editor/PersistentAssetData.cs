@@ -1,12 +1,10 @@
 using Newtonsoft.Json;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEditor;
 
 namespace AssetRetriever {
 
@@ -22,7 +20,7 @@ namespace AssetRetriever {
             GetDataFromDisk();
         }
 
-        public string GetKey(string type) {
+        public static string GetKey(string type) {
             return $"AssetRetriever-{VERSION}-{type}";
         }
 
