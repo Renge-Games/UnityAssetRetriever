@@ -1,6 +1,6 @@
 {
   "name": "com.renge.asset-retriever",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "displayName": "Asset Retriever",
   "description": "A quick way to download and import your favorite Unity Asset Store assets all at once.",
   "unity": "2020.3",

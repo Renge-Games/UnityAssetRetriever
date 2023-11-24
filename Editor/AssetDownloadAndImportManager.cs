@@ -1,12 +1,17 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
 namespace AssetRetriever {
 
+    // this should be destroyed once an asset list is fully imported to not interfere with other asset import operations from other packages
     [ExecuteAlways]
     public class AssetDownloaderAndImporter : MonoBehaviour {
 
@@ -20,6 +25,8 @@ namespace AssetRetriever {
                 return instance;
             }
         }
+
+        protected List<string> packagePathQueue;
 
         private void Awake() {
             if (instance != null && instance != this) {
@@ -40,8 +47,8 @@ namespace AssetRetriever {
             } else if (instance != this) {
                 DestroyImmediate(gameObject);
             }
-            if(timer > 0) {
-                timer-=Time.deltaTime;
+            if (timer > 0) {
+                timer -= Time.deltaTime;
             } else {
                 timer = interval;
                 Debug.Log(GetInstanceID());
@@ -51,52 +58,111 @@ namespace AssetRetriever {
         void OnEnable() {
             AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
             AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
+            AssetDatabase.importPackageStarted += ImportStarted;
+            AssetDatabase.importPackageCompleted += ImportCompleted;
+            AssetDatabase.importPackageCancelled += ImportCancelled;
+            AssetDatabase.importPackageFailed += ImportFailed;
         }
 
         void OnDisable() {
             AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
             AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
+            AssetDatabase.importPackageStarted -= ImportStarted;
+            AssetDatabase.importPackageCompleted -= ImportCompleted;
+            AssetDatabase.importPackageCancelled -= ImportCancelled;
+            AssetDatabase.importPackageFailed -= ImportFailed;
+        }
+
+        private void ImportFailed(string packageName, string errorMessage) {
+            ImportNextAsset();
+            Debug.LogError($"Import of '{packageName}' failed: {errorMessage}");
+        }
+
+        private void ImportCancelled(string packageName) {
+            ImportNextAsset();
+            Debug.Log("Import Cancelled");
+        }
+
+        private void ImportCompleted(string packageName) {
+            ImportNextAsset();
+            Debug.Log("Import Completed");
+        }
+
+        private void ImportStarted(string packageName) {
+            Debug.Log("Import Started");
         }
         public void OnBeforeAssemblyReload() {
             Debug.Log("Before Assembly Reload");
+            SessionState.SetString(PersistentAssetData.GetKey("PackagePathQueue"),JsonConvert.SerializeObject(packagePathQueue));
+            Debug.Log(packagePathQueue);
         }
 
         public void OnAfterAssemblyReload() {
             Debug.Log("After Assembly Reload");
+            packagePathQueue = JsonConvert.DeserializeObject<List<string>>(SessionState.GetString(PersistentAssetData.GetKey("PackagePathQueue"), null));
+            Debug.Log(packagePathQueue);
+            if(packagePathQueue == null || packagePathQueue.Count == 0) DestroyImmediate(gameObject);
             //TODO: create asset import class to keep track of which assets were imported and which still need to be imported
         }
 
-        public static void DownloadAssets(List<AssetDownload> assetList) {
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            Instance.DownloadAssetsAsync(assetList);
-#pragma warning restore CS4014
+        public async static void DownloadAssets(List<AssetDownload> assetList) {
+            await Instance.DownloadAssetsAsync(assetList);
         }
 
         public async static void DownloadAndImportAssets(List<AssetDownload> assetList) {
-            EditorPrefs.SetBool(PersistentAssetData.GetKey("AssetDownloadDone"), false);
-            var packagePaths = await Instance.DownloadAssetsAsync(assetList);
-            EditorPrefs.SetBool(PersistentAssetData.GetKey("AssetDownloadDone"), true);
-            Instance.ImportNextAsset(packagePaths);
+            //Maybe use session state instead of editor prefs
+            //SessionState.SetBool(PersistentAssetData.GetKey("AssetDownloadDone"), false);
+            var inst = Instance;
+            inst.packagePathQueue = await inst.DownloadAssetsAsync(assetList);
+            inst.ImportNextAsset();
         }
 
-        private async void ImportNextAsset(List<string> packagePaths) {
-            while (packagePaths.Count > 0) {
-                var packagePath = packagePaths[0];
-                packagePaths.RemoveAt(0);
-                await ImportAsset(packagePath);
-                Debug.Log("imported an asset! Yay");
+        private void ImportNextAsset() {
+            if (packagePathQueue != null && packagePathQueue.Count > 0) {
+                var packagePath = packagePathQueue[0];
+                packagePathQueue.RemoveAt(0);
+                ImportAsset(packagePath);
+            } else {
+                Debug.Log("Asset import process completed");
+                DestroyImmediate(gameObject);
             }
         }
 
-        private async Task ImportAsset(string packagePath, bool interactive = true) {
+        private void ImportAsset(string packagePath, bool interactive = true) {
             Debug.Log($"Importing Package at {packagePath}");
+
+            //need to check if the asset has changes before importing, otherwise unity might leave us hanging as they don't call the importPackageCompleted event when there are no changes
+            if (interactive) {
+                try {
+                    Assembly editorAssembly = Assembly.Load("UnityEditor.CoreModule");
+                    Type packageUtilityType = editorAssembly.GetType("UnityEditor.PackageUtility");
+                    MethodInfo extractAndPrepareAssetListMethod = packageUtilityType.GetMethod("ExtractAndPrepareAssetList", BindingFlags.Public | BindingFlags.Static);
+                    object items = extractAndPrepareAssetListMethod?.Invoke(null, new object[] { packagePath, null, null });
+                    if (items == null || !DoesPackageHaveChanges((object[])items, editorAssembly.GetType("UnityEditor.ImportPackageItem"))) {
+                        Debug.Log("The asset hasn't changed, no import necessary, moving onto next asset");
+                        ImportCancelled(packagePath);
+                        return;
+                    }
+                } catch (Exception e) {
+                    Debug.LogError($"There was an error importing assets with the interactive dialog. Please switch to auto import.");
+                    throw e;
+                }
+            }
+
             AssetDatabase.ImportPackage(packagePath, interactive);
-            bool isDone = false;
-            AssetDatabase.importPackageCompleted += (packageName) => {
-                Debug.Log($"Asset {packageName} imported.");
-                isDone = true;
-            };
-            while (!isDone) await Task.Yield();
+            //while (!SessionState.GetBool(PersistentAssetData.GetKey("AssetDownloadDone"), false)) await Task.Delay(100);
+        }
+
+        private bool DoesPackageHaveChanges(object[] items, Type type) {
+            if (items.Length == 0)
+                return false;
+
+            for (int i = 0; i < items.Length; i++) {
+                if (!(bool)type.GetField("isFolder").GetValue(items[i]) && (bool)type.GetField("assetChanged").GetValue(items[i]))
+                    return true;
+            }
+
+            return false;
         }
 
         private async Task<List<string>> DownloadAssetsAsync(List<AssetDownload> assetList) {
@@ -120,6 +186,7 @@ namespace AssetRetriever {
             }
             while (downloadCounter < assetList.Count) await Task.Yield();
             Debug.Log("------------ Downloading Assets Complete ------------");
+            await Task.Delay(1000);
             return packagePaths;
         }
     }

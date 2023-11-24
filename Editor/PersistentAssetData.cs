@@ -9,7 +9,7 @@ using UnityEditor;
 namespace AssetRetriever {
 
     public class PersistentAssetData {
-        public const string VERSION = "1.0.1";
+        //public const string VERSION = "1.1.0";
 
         public List<PackageData> assetStoreData;
         public List<PackageData> packageData;
@@ -21,7 +21,7 @@ namespace AssetRetriever {
         }
 
         public static string GetKey(string type) {
-            return $"AssetRetriever-{VERSION}-{type}";
+            return $"AssetRetriever-{type}";
         }
 
         public void GetDataFromDisk() {

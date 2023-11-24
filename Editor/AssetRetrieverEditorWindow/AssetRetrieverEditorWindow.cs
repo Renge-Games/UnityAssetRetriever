@@ -57,41 +57,41 @@ namespace AssetRetriever {
             //}
         }
 
-        private async Task<List<string>> DownloadAssets() {
-            Debug.Log("Getting Asset Info");
-            List<AssetDownload> data = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
-            List<string> packagePaths = new List<string>();
-            Debug.Log("Finished Getting Asset Info, Downloading Assets...");
-            int downloadCounter = 0;
-            foreach (AssetDownload item in data) {
-                Debug.Log($"Downloading {item.result.download.filename_safe_package_name}");
-                AssetUtil.DownloadAsset(item.result.download, (package_id, message, bytes, total) => {
-                    downloadCounter++;
-                    if (message == "ok") {
-                        Debug.Log($"Asset {item.result.download.filename_safe_package_name} downloaded. ({downloadCounter}/{data.Count})");
-                        var asset = item.result.download;
-                        string packagePath = $"{AssetUtil.GetAssetCachePath()}/{asset.filename_safe_publisher_name}/{asset.filename_safe_category_name}/{asset.filename_safe_package_name}.unitypackage";
-                        packagePaths.Add(packagePath);
-                    } else {
-                        Debug.Log(message);
-                    }
-                });
-            }
-            while (downloadCounter < data.Count) await Task.Yield();
-            Debug.Log("------------ Downloading Assets Complete ------------");
-            return packagePaths;
-        }
+        //private async Task<List<string>> DownloadAssets() {
+        //    Debug.Log("Getting Asset Info");
+        //    List<AssetDownload> data = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
+        //    List<string> packagePaths = new List<string>();
+        //    Debug.Log("Finished Getting Asset Info, Downloading Assets...");
+        //    int downloadCounter = 0;
+        //    foreach (AssetDownload item in data) {
+        //        Debug.Log($"Downloading {item.result.download.filename_safe_package_name}");
+        //        AssetUtil.DownloadAsset(item.result.download, (package_id, message, bytes, total) => {
+        //            downloadCounter++;
+        //            if (message == "ok") {
+        //                Debug.Log($"Asset {item.result.download.filename_safe_package_name} downloaded. ({downloadCounter}/{data.Count})");
+        //                var asset = item.result.download;
+        //                string packagePath = $"{AssetUtil.GetAssetCachePath()}/{asset.filename_safe_publisher_name}/{asset.filename_safe_category_name}/{asset.filename_safe_package_name}.unitypackage";
+        //                packagePaths.Add(packagePath);
+        //            } else {
+        //                Debug.Log(message);
+        //            }
+        //        });
+        //    }
+        //    while (downloadCounter < data.Count) await Task.Yield();
+        //    Debug.Log("------------ Downloading Assets Complete ------------");
+        //    return packagePaths;
+        //}
 
-        private async Task ImportAsset(string packagePath, bool interactive = true) {
-            Debug.Log($"Importing Package at {packagePath}");
-            AssetDatabase.ImportPackage(packagePath, interactive);
-            bool isDone = false;
-            AssetDatabase.importPackageCompleted += (packageName) => {
-                Debug.Log($"Asset {packageName} imported.");
-                isDone = true;
-            };
-            while (!isDone) await Task.Yield();
-        }
+        //private async Task ImportAsset(string packagePath, bool interactive = true) {
+        //    Debug.Log($"Importing Package at {packagePath}");
+        //    AssetDatabase.ImportPackage(packagePath, interactive);
+        //    bool isDone = false;
+        //    AssetDatabase.importPackageCompleted += (packageName) => {
+        //        Debug.Log($"Asset {packageName} imported.");
+        //        isDone = true;
+        //    };
+        //    while (!isDone) await Task.Yield();
+        //}
 
         private async void GenerateAssetLabels() {
             var foldout = rootVisualElement.Q<Foldout>("AssetFoldout");

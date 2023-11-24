@@ -1,16 +1,16 @@
 {
     "name": "renge.asset-retriever.editor",
     "rootNamespace": "",
-    "references": [
-        "GUID:23ac72935dddc294080605689c325e84"
-    ],
+    "references": [],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [],
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ],
     "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],

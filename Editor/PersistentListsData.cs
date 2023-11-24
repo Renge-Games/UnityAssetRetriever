@@ -15,7 +15,7 @@ namespace AssetRetriever {
         }
 
         public string GetKey(string type) {
-            return $"AssetRetriever-{PersistentAssetData.VERSION}-{type}";
+            return $"AssetRetriever-{type}";
         }
 
         private void GetListsData() {
