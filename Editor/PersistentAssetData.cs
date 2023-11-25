@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEditor;
+using System;
 
 namespace AssetRetriever {
 
@@ -97,9 +98,22 @@ namespace AssetRetriever {
         }
     }
 
-    public class PackageData {
+    public class PackageData : IEquatable<PackageData> {
         public string id;
         public int packageId;
         public string displayName;
+
+        public bool Equals(PackageData other) {
+            return other is object && this.id == other.id && this.packageId == other.packageId && this.displayName == other.displayName;
+        }
+
+        public override bool Equals(object obj) {
+            if(obj is PackageData) return Equals((PackageData)obj);
+            return false;
+        }
+
+        public override int GetHashCode() {
+            return packageId.GetHashCode();
+        }
     }
 }

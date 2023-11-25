@@ -103,8 +103,10 @@ namespace AssetRetriever {
             foreach (var asset in assets) {
                 var lbl = new Label(asset.displayName);
                 lbl.RegisterCallback<ClickEvent>((evt) => {
-                    if (listsData.AddItemToList("Default Assets", asset))
-                        rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Add(new Label(asset.displayName));
+                    if (listsData.AddItemToList("Default Assets", asset)) {
+                        AddListLabel(asset, rootVisualElement.Q<Foldout>("DefaultAssetsFoldout"));
+                        //rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Add(new Label(asset.displayName));
+                    }
                 });
                 foldout.Add(lbl);
             }
@@ -117,8 +119,10 @@ namespace AssetRetriever {
             foreach (var asset in assets) {
                 var lbl = new Label(asset.displayName);
                 lbl.RegisterCallback<ClickEvent>((evt) => {
-                    if (listsData.AddItemToList("Default Assets", asset))
-                        rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Add(new Label(asset.displayName));
+                    if (listsData.AddItemToList("Default Assets", asset)) {
+                        AddListLabel(asset, rootVisualElement.Q<Foldout>("DefaultAssetsFoldout"));
+                        //rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Add(new Label(asset.displayName));
+                    }
                 });
                 foldout.Add(lbl);
             }
@@ -135,14 +139,18 @@ namespace AssetRetriever {
             }
             foreach (var tuple in lists) {
                 foreach (var package in tuple.Value) {
-                    var lbl = new Label(package.displayName);
-                    lbl.RegisterCallback<ClickEvent>((evt) => {
-                        if (listsData.RemoveItemFromList("Default Assets", package))
-                            rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Remove(lbl);
-                    });
-                    foldout.Add(lbl);
+                    AddListLabel(package, foldout);
                 }
             }
+        }
+
+        private void AddListLabel(PackageData package, Foldout listFoldout) {
+            var lbl = new Label(package.displayName);
+            lbl.RegisterCallback<ClickEvent>((evt) => {
+                if (listsData.RemoveItemFromList("Default Assets", package))
+                    rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Remove(lbl);
+            });
+            listFoldout.Add(lbl);
         }
     }
 }

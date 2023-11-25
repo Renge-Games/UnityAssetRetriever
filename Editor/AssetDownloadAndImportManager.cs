@@ -1,3 +1,4 @@
+using Codice.Client.BaseCommands;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -44,6 +45,7 @@ namespace AssetRetriever {
             } else if (instance != this) {
                 DestroyImmediate(gameObject);
             }
+            //Debug.Log(GetInstanceID());
         }
 
         void OnEnable() {
@@ -65,17 +67,17 @@ namespace AssetRetriever {
         }
 
         private void ImportFailed(string packageName, string errorMessage) {
-            Debug.LogError($"Import of '{packageName}' failed: {errorMessage}");
+            Debug.LogError($"Import of '{packageName}' Failed: {errorMessage}");
             ImportNextAsset();
         }
 
         private void ImportCancelled(string packageName) {
-            Debug.Log("Import Cancelled");
+            Debug.Log($"Import of '{packageName}' Cancelled");
             ImportNextAsset();
         }
 
         private void ImportCompleted(string packageName) {
-            Debug.Log("Import Completed");
+            Debug.Log($"Import of '{packageName}' Completed");
             ImportNextAsset();
         }
 
@@ -83,12 +85,12 @@ namespace AssetRetriever {
         //    Debug.Log("Import Started");
         //}
         public void OnBeforeAssemblyReload() {
-            Debug.Log("Before Assembly Reload");
+            //Debug.Log("Before Assembly Reload");
             SessionState.SetString(PersistentAssetData.GetKey("PackagePathQueue"),JsonConvert.SerializeObject(packagePathQueue));
         }
 
         public void OnAfterAssemblyReload() {
-            Debug.Log("After Assembly Reload");
+            //Debug.Log("After Assembly Reload");
             packagePathQueue = JsonConvert.DeserializeObject<List<string>>(SessionState.GetString(PersistentAssetData.GetKey("PackagePathQueue"), null));
             if(packagePathQueue == null || packagePathQueue.Count == 0) DestroyImmediate(gameObject);
         }
@@ -133,6 +135,7 @@ namespace AssetRetriever {
                     }
                 } catch (Exception e) {
                     Debug.LogError($"There was an error importing assets with the interactive dialog. Please switch to auto import.");
+                    DestroyImmediate(gameObject);
                     throw e;
                 }
             }
