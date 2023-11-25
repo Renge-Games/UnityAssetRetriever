@@ -38,27 +38,18 @@ namespace AssetRetriever {
             gameObject.hideFlags = HideFlags.HideAndDontSave;
         }
 
-        float timer = 0;
-        float interval = 1f;
-
         private void Update() {
             if (instance == null) {
                 instance = this;
             } else if (instance != this) {
                 DestroyImmediate(gameObject);
             }
-            if (timer > 0) {
-                timer -= Time.deltaTime;
-            } else {
-                timer = interval;
-                Debug.Log(GetInstanceID());
-            }
         }
 
         void OnEnable() {
             AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
             AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
-            AssetDatabase.importPackageStarted += ImportStarted;
+            //AssetDatabase.importPackageStarted += ImportStarted;
             AssetDatabase.importPackageCompleted += ImportCompleted;
             AssetDatabase.importPackageCancelled += ImportCancelled;
             AssetDatabase.importPackageFailed += ImportFailed;
@@ -67,42 +58,39 @@ namespace AssetRetriever {
         void OnDisable() {
             AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
             AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
-            AssetDatabase.importPackageStarted -= ImportStarted;
+            //AssetDatabase.importPackageStarted -= ImportStarted;
             AssetDatabase.importPackageCompleted -= ImportCompleted;
             AssetDatabase.importPackageCancelled -= ImportCancelled;
             AssetDatabase.importPackageFailed -= ImportFailed;
         }
 
         private void ImportFailed(string packageName, string errorMessage) {
-            ImportNextAsset();
             Debug.LogError($"Import of '{packageName}' failed: {errorMessage}");
+            ImportNextAsset();
         }
 
         private void ImportCancelled(string packageName) {
-            ImportNextAsset();
             Debug.Log("Import Cancelled");
+            ImportNextAsset();
         }
 
         private void ImportCompleted(string packageName) {
-            ImportNextAsset();
             Debug.Log("Import Completed");
+            ImportNextAsset();
         }
 
-        private void ImportStarted(string packageName) {
-            Debug.Log("Import Started");
-        }
+        //private void ImportStarted(string packageName) {
+        //    Debug.Log("Import Started");
+        //}
         public void OnBeforeAssemblyReload() {
             Debug.Log("Before Assembly Reload");
             SessionState.SetString(PersistentAssetData.GetKey("PackagePathQueue"),JsonConvert.SerializeObject(packagePathQueue));
-            Debug.Log(packagePathQueue);
         }
 
         public void OnAfterAssemblyReload() {
             Debug.Log("After Assembly Reload");
             packagePathQueue = JsonConvert.DeserializeObject<List<string>>(SessionState.GetString(PersistentAssetData.GetKey("PackagePathQueue"), null));
-            Debug.Log(packagePathQueue);
             if(packagePathQueue == null || packagePathQueue.Count == 0) DestroyImmediate(gameObject);
-            //TODO: create asset import class to keep track of which assets were imported and which still need to be imported
         }
 
         public async static void DownloadAssets(List<AssetDownload> assetList) {
@@ -117,18 +105,18 @@ namespace AssetRetriever {
             inst.ImportNextAsset();
         }
 
-        private void ImportNextAsset() {
+        private async void ImportNextAsset() {
             if (packagePathQueue != null && packagePathQueue.Count > 0) {
                 var packagePath = packagePathQueue[0];
                 packagePathQueue.RemoveAt(0);
-                ImportAsset(packagePath);
+                await ImportAsset(packagePath);
             } else {
                 Debug.Log("Asset import process completed");
                 DestroyImmediate(gameObject);
             }
         }
 
-        private void ImportAsset(string packagePath, bool interactive = true) {
+        private async Task ImportAsset(string packagePath, bool interactive = false) {
             Debug.Log($"Importing Package at {packagePath}");
 
             //need to check if the asset has changes before importing, otherwise unity might leave us hanging as they don't call the importPackageCompleted event when there are no changes
@@ -149,6 +137,7 @@ namespace AssetRetriever {
                 }
             }
 
+            await Task.Delay(1000);
             AssetDatabase.ImportPackage(packagePath, interactive);
             //while (!SessionState.GetBool(PersistentAssetData.GetKey("AssetDownloadDone"), false)) await Task.Delay(100);
         }
