@@ -1,17 +1,16 @@
 using Newtonsoft.Json;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEditor;
+using System;
 
 namespace AssetRetriever {
 
     public class PersistentAssetData {
-        public const string VERSION = "1.0.1";
+        //public const string VERSION = "1.1.0";
 
         public List<PackageData> assetStoreData;
         public List<PackageData> packageData;
@@ -22,8 +21,8 @@ namespace AssetRetriever {
             GetDataFromDisk();
         }
 
-        public string GetKey(string type) {
-            return $"AssetRetriever-{VERSION}-{type}";
+        public static string GetKey(string type) {
+            return $"AssetRetriever-{type}";
         }
 
         public void GetDataFromDisk() {
@@ -99,9 +98,22 @@ namespace AssetRetriever {
         }
     }
 
-    public class PackageData {
+    public class PackageData : IEquatable<PackageData> {
         public string id;
         public int packageId;
         public string displayName;
+
+        public bool Equals(PackageData other) {
+            return other is object && this.id == other.id && this.packageId == other.packageId && this.displayName == other.displayName;
+        }
+
+        public override bool Equals(object obj) {
+            if(obj is PackageData) return Equals((PackageData)obj);
+            return false;
+        }
+
+        public override int GetHashCode() {
+            return packageId.GetHashCode();
+        }
     }
 }

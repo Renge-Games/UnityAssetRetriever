@@ -1,8 +1,8 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using System.Linq;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace AssetRetriever {
 
@@ -18,7 +18,6 @@ namespace AssetRetriever {
         }
 
         public void CreateGUI() {
-            // Each editor window contains a root VisualElement object
             VisualElement root = rootVisualElement;
 
             // Import UXML
@@ -41,46 +40,58 @@ namespace AssetRetriever {
         }
 
         private async void DownloadAssets(ClickEvent evt) {
-            Debug.Log("Getting Asset Info");
-            List<AssetDownload> data = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
-            Debug.Log("Finished Getting Asset Info, Downloading Assets...");
-            int downloadCounter = 0;
-            foreach (AssetDownload item in data) {
-                Debug.Log($"Downloading {item.result.download.filename_safe_package_name}");
-                AssetUtil.DownloadAsset(item.result.download, (package_id, message, bytes, total) => {
-                    downloadCounter++;
-                    if (message == "ok") {
-                        Debug.Log($"Asset {item.result.download.filename_safe_package_name} downloaded. ({downloadCounter}/{data.Count})");
-                    } else {
-                        Debug.Log(message);
-                    }
-                    if (downloadCounter >= data.Count) {
-                        Debug.Log("------------ Downloading Assets Complete ------------");
-                    }
-                });
-            }
+            if (Application.isPlaying) throw new System.Exception("Please exit Play Mode before downloading Assets.");
+            var assetList = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
+            AssetDownloaderAndImporter.DownloadAssets(assetList);
         }
 
         private async void DownloadAndImportAssets(ClickEvent evt) {
-
-            Debug.Log("Getting Asset Info");
-            List<AssetDownload> data = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
-            Debug.Log("Finished Getting Asset Info, Downloading Assets...");
-            foreach (AssetDownload item in data) {
-                Debug.Log($"Downloading {item.result.download.filename_safe_package_name}");
-                AssetUtil.DownloadAsset(item.result.download, (package_id, message, bytes, total) => {
-                    if (message == "ok") {
-                        Debug.Log($"Asset {item.result.download.filename_safe_package_name} downloaded. Now Importing asset...");
-                        var asset = item.result.download;
-                        string packagePath = $"{AssetUtil.GetAssetCachePath()}/{asset.filename_safe_publisher_name}/{asset.filename_safe_category_name}/{asset.filename_safe_package_name}.unitypackage";
-                        AssetDatabase.ImportPackage(packagePath, false);
-                        AssetDatabase.importPackageCompleted += (packageName) => {
-                            Debug.Log($"Asset {item.result.download.filename_safe_package_name} imported.");
-                        };
-                    }
-                });
-            }
+            if (Application.isPlaying) throw new System.Exception("Please exit Play Mode before downloading and importing Assets.");
+            var assetList = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
+            AssetDownloaderAndImporter.DownloadAndImportAssets(assetList);
+            //var packagePaths = await DownloadAssets();
+            //while (packagePaths.Count > 0) {
+            //    var packagePath = packagePaths[0];
+            //    packagePaths.RemoveAt(0);
+            //    await ImportAsset(packagePath);
+            //}
         }
+
+        //private async Task<List<string>> DownloadAssets() {
+        //    Debug.Log("Getting Asset Info");
+        //    List<AssetDownload> data = await assetData.GetDownloadInfo(listsData.lists["Default Assets"]);
+        //    List<string> packagePaths = new List<string>();
+        //    Debug.Log("Finished Getting Asset Info, Downloading Assets...");
+        //    int downloadCounter = 0;
+        //    foreach (AssetDownload item in data) {
+        //        Debug.Log($"Downloading {item.result.download.filename_safe_package_name}");
+        //        AssetUtil.DownloadAsset(item.result.download, (package_id, message, bytes, total) => {
+        //            downloadCounter++;
+        //            if (message == "ok") {
+        //                Debug.Log($"Asset {item.result.download.filename_safe_package_name} downloaded. ({downloadCounter}/{data.Count})");
+        //                var asset = item.result.download;
+        //                string packagePath = $"{AssetUtil.GetAssetCachePath()}/{asset.filename_safe_publisher_name}/{asset.filename_safe_category_name}/{asset.filename_safe_package_name}.unitypackage";
+        //                packagePaths.Add(packagePath);
+        //            } else {
+        //                Debug.Log(message);
+        //            }
+        //        });
+        //    }
+        //    while (downloadCounter < data.Count) await Task.Yield();
+        //    Debug.Log("------------ Downloading Assets Complete ------------");
+        //    return packagePaths;
+        //}
+
+        //private async Task ImportAsset(string packagePath, bool interactive = true) {
+        //    Debug.Log($"Importing Package at {packagePath}");
+        //    AssetDatabase.ImportPackage(packagePath, interactive);
+        //    bool isDone = false;
+        //    AssetDatabase.importPackageCompleted += (packageName) => {
+        //        Debug.Log($"Asset {packageName} imported.");
+        //        isDone = true;
+        //    };
+        //    while (!isDone) await Task.Yield();
+        //}
 
         private async void GenerateAssetLabels() {
             var foldout = rootVisualElement.Q<Foldout>("AssetFoldout");
@@ -92,8 +103,10 @@ namespace AssetRetriever {
             foreach (var asset in assets) {
                 var lbl = new Label(asset.displayName);
                 lbl.RegisterCallback<ClickEvent>((evt) => {
-                    if (listsData.AddItemToList("Default Assets", asset))
-                        rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Add(new Label(asset.displayName));
+                    if (listsData.AddItemToList("Default Assets", asset)) {
+                        AddListLabel(asset, rootVisualElement.Q<Foldout>("DefaultAssetsFoldout"));
+                        //rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Add(new Label(asset.displayName));
+                    }
                 });
                 foldout.Add(lbl);
             }
@@ -106,8 +119,10 @@ namespace AssetRetriever {
             foreach (var asset in assets) {
                 var lbl = new Label(asset.displayName);
                 lbl.RegisterCallback<ClickEvent>((evt) => {
-                    if (listsData.AddItemToList("Default Assets", asset))
-                        rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Add(new Label(asset.displayName));
+                    if (listsData.AddItemToList("Default Assets", asset)) {
+                        AddListLabel(asset, rootVisualElement.Q<Foldout>("DefaultAssetsFoldout"));
+                        //rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Add(new Label(asset.displayName));
+                    }
                 });
                 foldout.Add(lbl);
             }
@@ -124,14 +139,18 @@ namespace AssetRetriever {
             }
             foreach (var tuple in lists) {
                 foreach (var package in tuple.Value) {
-                    var lbl = new Label(package.displayName);
-                    lbl.RegisterCallback<ClickEvent>((evt) => {
-                        if (listsData.RemoveItemFromList("Default Assets", package))
-                            rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Remove(lbl);
-                    });
-                    foldout.Add(lbl);
+                    AddListLabel(package, foldout);
                 }
             }
+        }
+
+        private void AddListLabel(PackageData package, Foldout listFoldout) {
+            var lbl = new Label(package.displayName);
+            lbl.RegisterCallback<ClickEvent>((evt) => {
+                if (listsData.RemoveItemFromList("Default Assets", package))
+                    rootVisualElement.Q<Foldout>("DefaultAssetsFoldout").Remove(lbl);
+            });
+            listFoldout.Add(lbl);
         }
     }
 }

@@ -14,7 +14,7 @@
             <ui:ScrollView>
                 <ui:VisualElement style="flex-direction: row;">
                     <ui:Foldout text="Default Assets" name="DefaultAssetsFoldout" />
-                    <ui:VisualElement style="flex-direction: row; flex-grow: 1; height: 20px;">
+                    <ui:VisualElement style="flex-grow: 1; flex-direction: row; transform-origin: center; height: 20px;">
                         <ui:VisualElement style="flex-grow: 1;" />
                         <ui:Button text="Download" display-tooltip-when-elided="true" name="DownloadDefaultAssets" />
                         <ui:Button text="Download and Import" display-tooltip-when-elided="true" name="DownloadAndImportDefaultAssets" style="width: 150px;" />
