@@ -2,7 +2,7 @@
 
 [![](https://dcbadge.vercel.app/api/server/SBKb9eFtfF)](https://discord.gg/SBKb9eFtfF)
 
-Download and Import your favorite Unity Asset Store assets all at once with this tool.
+Create lists with your favorite Unity Asset Store assets and Download and Import them all at once with this tool.
 
 ![asset-inventory-window](https://i.imgur.com/50eaTg1.png)
 
